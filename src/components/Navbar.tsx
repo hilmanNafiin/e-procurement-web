@@ -13,7 +13,7 @@ const Navbar = () => {
   const isActive = (path: string) => location.pathname === path;
   const navigate = useNavigate();
   const remove = (path: string) => {
-    if (path === "/login") ls.remove("isLogin");
+    if (path === "/") ls.remove("isLogin");
   };
   return (
     <>

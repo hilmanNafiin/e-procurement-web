@@ -10,19 +10,14 @@ import {
   Popconfirm,
   Space,
   Pagination,
-  Card,
   Typography,
   Divider,
-  Layout,
   Drawer,
 } from "antd";
 import {
-  PlusOutlined,
   EditOutlined,
   DeleteOutlined,
   SearchOutlined,
-  ExclamationCircleOutlined,
-  MenuOutlined,
 } from "@ant-design/icons";
 import { AiOutlinePlus } from "react-icons/ai";
 
@@ -32,6 +27,8 @@ import SideBar from "../components/SideBar";
 import Navbar from "../components/Navbar";
 import { useLocation } from "react-router-dom";
 import AlertBox from "../components/AlertBox";
+import ImportModal from "../components/ModalProductsImport";
+import formatRupiah from "../components/IDR";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -50,6 +47,7 @@ interface Product {
 
 const Products = () => {
   const ls = new SecureLS({ encodingType: "aes" });
+
   const token = ls.get("isLogin");
   const API_URL = import.meta.env.VITE_API_URL;
 
@@ -73,13 +71,12 @@ const Products = () => {
   });
   const [searchText, setSearchText] = useState<string>("");
   const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
-  const [isModalDelete, setIsModalDelete] = useState<boolean>(false);
+  const [isModalImport, setIsModalImport] = useState<boolean>(false);
   const [form] = Form.useForm();
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [user, setUser] = useState<any>(null);
   const [myVendor, setMyVendor] = useState<any>(null);
-  const [data, setData] = useState<Product | null>(null);
 
   useEffect(() => {
     fetchUser();
@@ -97,30 +94,6 @@ const Products = () => {
       message.error("Failed to fetch user data");
     }
   };
-  const importProducts = async (file: File) => {
-    try {
-      const formData = new FormData();
-      formData.append("file", file); // sama seperti di Postman
-
-      const response = await axios.post(
-        "http://localhost:3000/api/v1/products/import",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            // Tambahkan Authorization jika perlu
-            Authorization: "Bearer your_token_here",
-          },
-        }
-      );
-
-      console.log("Import success:", response.data);
-      alert("Import success!");
-    } catch (error: any) {
-      console.error("Import failed:", error);
-      alert("Import failed!");
-    }
-  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -132,15 +105,20 @@ const Products = () => {
       };
 
       const res = await axios.get(`${API_URL}/products`, {
-        headers,
+        headers: {
+          ...headers,
+          "Cache-Control": "no-cache",
+        },
         params,
       });
 
       if (res.data.status) {
-        setProducts(res.data.data);
+        setProducts(res.data.data.products);
         setPagination({
           ...pagination,
-          total: res.data.data ? res.data.data[0].total_data : 0,
+          total: res.data.data.products
+            ? res.data.data.products[0].total_data
+            : 0,
         });
       }
     } catch (err) {
@@ -205,7 +183,7 @@ const Products = () => {
         if (!response.data.status)
           setAlert({
             type: "error",
-            message: "Please input your Vendor Profile",
+            message: "Please input your Vendor Profilee",
           });
       }
 
@@ -235,7 +213,12 @@ const Products = () => {
   };
   const fetchVendor = async () => {
     try {
-      const res = await axios.get(`${API_URL}/vendors/private`, { headers });
+      const res = await axios.get(`${API_URL}/vendors/private`, {
+        headers: {
+          ...headers,
+          "Cache-Control": "no-cache",
+        },
+      });
       if (res.data.status && res.data.data) {
         setMyVendor(res.data.data);
       }
@@ -260,7 +243,7 @@ const Products = () => {
       title: "Price",
       dataIndex: "price",
       key: "price",
-      render: (price: number) => `${price}`,
+      render: (price: number) => `${formatRupiah(price)}`,
       sorter: (a: Product, b: Product) => a.price - b.price,
     },
     {
@@ -268,6 +251,13 @@ const Products = () => {
       dataIndex: "stock",
       key: "stock",
       sorter: (a: Product, b: Product) => a.stock - b.stock,
+    },
+    {
+      title: "Total",
+      key: "total",
+      render: (_: any, record: Product) =>
+        formatRupiah(record.price * record.stock),
+      sorter: (a: Product, b: Product) => a.price * a.stock - b.price * b.stock,
     },
     ...(isActive
       ? [
@@ -299,7 +289,7 @@ const Products = () => {
 
   return (
     <>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-blue-100">
         {alert && (
           <AlertBox
             type={alert.type}
@@ -356,7 +346,7 @@ const Products = () => {
                       </button>
 
                       <button
-                        onClick={() => importProducts(true)}
+                        onClick={() => setIsModalImport(true)}
                         className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded w-full md:w-auto"
                       >
                         <AiOutlinePlus className="text-lg" />
@@ -477,7 +467,7 @@ const Products = () => {
                   formatter={(value) =>
                     `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                   }
-                  parser={(value) => value!.replace(/\$\s?|(,*)/g, "")}
+                  //   parser={(value) => value!.replace(/\$\s?|(,*)/g, "")}
                 />
               </Form.Item>
 
@@ -496,6 +486,10 @@ const Products = () => {
             </div>
           </Form>
         </Modal>
+        <ImportModal
+          isModalImport={isModalImport}
+          setIsModalImport={() => setIsModalImport(false)}
+        />
       </div>
     </>
   );

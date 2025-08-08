@@ -3,13 +3,23 @@ import SecureLS from "secure-ls";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/SideBar";
-import { data, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import AlertBox from "../components/AlertBox";
 
+interface Vendor {
+  id: number;
+  user_id: number;
+  name: string;
+  address: string;
+  phone: string;
+  created_at?: string;
+  updated_at?: string;
+}
 const Vendor = () => {
   const [error, setError] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isExsiting, setIsExsiting] = useState<Vendor | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const location = useLocation();
 
@@ -51,8 +61,14 @@ const Vendor = () => {
 
   const fetchVendor = async () => {
     try {
-      const res = await axios.get(`${API_URL}/vendors/private`, { headers });
+      const res = await axios.get(`${API_URL}/vendors/private`, {
+        headers: {
+          ...headers,
+          "Cache-Control": "no-cache",
+        },
+      });
       if (res.data.status && res.data.data) {
+        setIsExsiting(res.data.data);
         setForm({
           name: res.data.data.name,
           address: res.data.data.address,
@@ -70,21 +86,32 @@ const Vendor = () => {
     const payload = {
       ...form,
       user_id: user?.id,
+      vendor_id: isExsiting ? isExsiting.id : undefined,
     };
-    try {
+
+    if (isExsiting) {
+      const response = await axios.patch(`${API_URL}/vendors`, payload, {
+        headers,
+      });
+      if (response.data.status) {
+        setAlert({ type: "success", message: response.data.messages });
+      }
+      if (!response.data.status)
+        setAlert({ type: "error", message: response.data.messages });
+    } else {
       const response = await axios.post(`${API_URL}/vendors`, payload, {
         headers,
       });
       if (response.data.status) {
         setAlert({ type: "success", message: response.data.messages });
-      } else {
-        setAlert({ type: "error", message: response.data.messages });
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to save vendor");
-    } finally {
-      setIsSubmitting(false);
+      if (!response.data.status)
+        setAlert({
+          type: "error",
+          message: "Please input your Vendor Profilee",
+        });
     }
+    setIsSubmitting(false);
   };
 
   useEffect(() => {
@@ -103,7 +130,7 @@ const Vendor = () => {
   } | null>(null);
   return (
     <>
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-blue-100">
         {alert && (
           <AlertBox
             type={alert.type}

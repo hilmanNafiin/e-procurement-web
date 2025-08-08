@@ -1,9 +1,10 @@
+import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import SecureLS from "secure-ls";
 
 const ls = new SecureLS({ encodingType: "aes" });
 
-const PrivateRoute = ({ children }: { children: JSX.Element }) => {
+const PrivateRoute = ({ children }: { children: ReactNode }) => {
   let isAuthenticated = false;
 
   try {
@@ -13,7 +14,7 @@ const PrivateRoute = ({ children }: { children: JSX.Element }) => {
     isAuthenticated = false;
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" replace />;
+  return isAuthenticated ? children : <Navigate to="/" replace />;
 };
 
 export default PrivateRoute;

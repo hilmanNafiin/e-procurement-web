@@ -15,7 +15,7 @@ export const menuItems = [
   },
   {
     label: "Logout",
-    path: "/login",
+    path: "/",
     icon: <CiLogout className="text-lg" />,
   },
 ];

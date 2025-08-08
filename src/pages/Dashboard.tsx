@@ -1,14 +1,254 @@
+import { Card, Drawer, Form, Input, Pagination, Statistic, Table } from "antd";
+import Navbar from "../components/Navbar";
 import SideBar from "../components/SideBar";
-import Products from "./Products";
-import Vendor from "./Vendor";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import SecureLS from "secure-ls";
+
+import { SearchOutlined } from "@ant-design/icons";
+import formatRupiah from "../components/IDR";
+
+interface Product {
+  id: number;
+  vendor_id: number;
+  user_id: number;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  created_at?: string;
+  updated_at?: string;
+}
 
 const Dashboard = () => {
+  const ls = new SecureLS({ encodingType: "aes" });
+  const token = ls.get("isLogin");
+  const API_URL = import.meta.env.VITE_API_URL;
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [omset, setOmset] = useState<number>(0);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [searchText, setSearchText] = useState<string>("");
+  const headers = {
+    Authorization: `Bearer ${token?.tokens.replace("Bearer ", "")}`,
+  };
+  const [form, setForm] = useState({
+    name: "",
+    address: "",
+    phone: "",
+  });
+
+  const fetchVendor = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/vendors/private`, { headers });
+      if (res.data.status && res.data.data) {
+        setForm({
+          name: res.data.data.name,
+          address: res.data.data.address,
+          phone: res.data.data.phone,
+        });
+      }
+    } catch (err) {
+      console.error("Failed to fetch vendor");
+    }
+  };
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: pagination.current,
+        size: pagination.pageSize,
+        search: searchText,
+      };
+
+      const res = await axios.get(`${API_URL}/products`, {
+        headers,
+        params,
+      });
+
+      if (res.data.status) {
+        setProducts(res.data.data.products);
+        setOmset(res.data.data.omset);
+        setPagination({
+          ...pagination,
+          total: res.data.data.products
+            ? res.data.data.products[0].total_data
+            : 0,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  const columns = [
+    {
+      title: "Name",
+      dataIndex: "name",
+      key: "name",
+      sorter: (a: Product, b: Product) => a.name.localeCompare(b.name),
+    },
+    {
+      title: "Description",
+      dataIndex: "description",
+      key: "description",
+      ellipsis: true,
+    },
+    {
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+      render: (price: number) => `${formatRupiah(price)}`,
+      sorter: (a: Product, b: Product) => a.price - b.price,
+    },
+    {
+      title: "Stock",
+      dataIndex: "stock",
+      key: "stock",
+      sorter: (a: Product, b: Product) => a.stock - b.stock,
+    },
+    {
+      title: "Total",
+      key: "total",
+      render: (_: any, record: Product) =>
+        formatRupiah(record.price * record.stock),
+      sorter: (a: Product, b: Product) => a.price * a.stock - b.price * b.stock,
+    },
+  ];
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value);
+    setPagination({ ...pagination, current: 1 });
+  };
+  useEffect(() => {
+    fetchVendor();
+    fetchProducts();
+  }, [pagination.current, searchText]);
   return (
-    <div className="">
-      {/* Halaman isi */}
-      <h1 className="">Welcome to Dashboard</h1>
-      <Vendor />
-      <Products />
+    <div className="flex min-h-screen bg-blue-100">
+      {/* Sidebar for desktop */}
+      <div className="hidden md:block w-64 fixed inset-y-0 bg-white shadow z-40">
+        <SideBar />
+      </div>
+
+      {/* Drawer for mobile */}
+      <Drawer
+        placement="left"
+        closable={false}
+        // onClose={() => setIsDrawerOpen(false)}
+        // open={isDrawerOpen}
+        bodyStyle={{ padding: 0 }}
+        width={256}
+      >
+        <SideBar />
+      </Drawer>
+
+      {/* Main Area */}
+      <div className="flex-1 flex flex-col md:ml-64 w-full">
+        {/* Top Bar */}
+        <div className="bg-blue-100 text-blue-700 font-semibold px-4 h-[73px] flex items-center justify-between shadow-sm">
+          <span className="text-base md:text-lg"></span>
+        </div>
+
+        <Navbar />
+
+        {/* Content */}
+        <main className="pt-4 px-3 md:px-8 pb-10 w-full">
+          <div className="shadow-sm bg-white p-6 rounded w-full">
+            {/* Vendor Profilee */}
+            <Card
+              title={
+                form.name ? "Vendor Profile" : "Please Add Your Profil Vendor"
+              }
+              bordered
+              className="shadow-sm rounded-xl"
+            >
+              <Form
+                layout="vertical"
+                fields={[
+                  { name: ["name"], value: form.name },
+                  { name: ["address"], value: form.address },
+                  { name: ["phone"], value: form.phone },
+                ]}
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Form.Item label="Vendor Name" name="name" className="mb-0">
+                    <Input readOnly />
+                  </Form.Item>
+                  <Form.Item label="Address" name="address" className="mb-0">
+                    <Input readOnly />
+                  </Form.Item>
+                  <Form.Item label="Phone Number" name="phone" className="mb-0">
+                    <Input readOnly />
+                  </Form.Item>
+                </div>
+              </Form>
+            </Card>
+            <div className="h-3" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-4">
+              <Card bordered className="shadow rounded-xl">
+                <Statistic title="Total Products" value={pagination.total} />
+              </Card>
+              <Card
+                bordered
+                className="shadow rounded-xl text-center text-gray-400"
+              >
+                <Statistic title="Total Omset" value={formatRupiah(omset)} />
+              </Card>
+            </div>
+            <div className="h-3" />
+            {/* Product Table */}
+            <Card
+              title="Product List"
+              bordered
+              className="shadow-sm rounded-xl overflow-auto"
+            >
+              <div className="mb-4">
+                <Input.Search
+                  placeholder="Search products..."
+                  allowClear
+                  enterButton={<SearchOutlined />}
+                  size="large"
+                  className="w-full md:w-[400px]"
+                  onChange={handleSearch}
+                />
+              </div>
+
+              <div className="overflow-x-auto w-full">
+                <Table
+                  columns={columns}
+                  dataSource={products}
+                  rowKey="id"
+                  loading={loading}
+                  pagination={false}
+                  scroll={{ x: true }}
+                  bordered
+                />
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Pagination
+                  current={pagination.current}
+                  pageSize={pagination.pageSize}
+                  total={pagination.total}
+                  showSizeChanger
+                  showQuickJumper
+                  onChange={(page, pageSize) =>
+                    setPagination({ ...pagination, current: page, pageSize })
+                  }
+                  showTotal={(total, range) =>
+                    `${range[0]}-${range[1]} of ${total} items`
+                  }
+                />
+              </div>
+            </Card>
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

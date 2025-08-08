@@ -9,13 +9,13 @@ const SideBar = () => {
 
   const isActive = (path: string) => location.pathname === path;
   const remove = (path: string) => {
-    if (path === "/login") ls.remove("isLogin");
+    if (path === "/") ls.remove("isLogin");
   };
   return (
     <div className="hidden md:block fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200 shadow z-20">
       {/* Header */}
       <div
-        className="flex items-center justify-center px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white text-2xl font-semibold tracking-wide shadow"
+        className="flex items-center justify-center px-6 py-5 bg-gradient-to-r from-blue-600 to-blue-500 text-white text-2xl font-semibold tracking-wide shadow cursor-pointer"
         onClick={() => navigate("/dashboard")}
       >
         E-Procurement

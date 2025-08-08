@@ -154,7 +154,7 @@ const Register = () => {
               Sudah punya akun?{" "}
               <span
                 className="text-blue-500 underline cursor-pointer"
-                onClick={() => navigate("/login")}
+                onClick={() => navigate("/")}
               >
                 Login di sini
               </span>
