@@ -11,7 +11,7 @@ import type { UploadChangeParam, UploadFile } from "antd/es/upload/interface";
 const { Text } = Typography;
 
 const ls = new SecureLS({ encodingType: "aes" });
-const ImportModal = ({ isModalImport, setIsModalImport }: any) => {
+const ImportModal = ({ isModalImport, setIsModalImport, vendor_id }: any) => {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -44,9 +44,9 @@ const ImportModal = ({ isModalImport, setIsModalImport }: any) => {
       setAlert({ type: "error", message: "Please select a file first." });
       return;
     }
-
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("vendor_id", vendor_id);
     const token = ls.get("isLogin");
 
     try {

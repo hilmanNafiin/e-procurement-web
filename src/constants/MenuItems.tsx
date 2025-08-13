@@ -1,5 +1,7 @@
 // src/constants/menuItems.ts
 import { FaIndustry, FaBoxOpen } from "react-icons/fa";
+import { FaCartPlus } from "react-icons/fa";
+
 import { CiLogout } from "react-icons/ci";
 
 export const menuItems = [
@@ -12,6 +14,11 @@ export const menuItems = [
     label: "Products",
     path: "/products",
     icon: <FaBoxOpen className="text-lg" />,
+  },
+  {
+    label: "Transaction",
+    path: "/transactions",
+    icon: <FaCartPlus className="text-lg" />,
   },
   {
     label: "Logout",

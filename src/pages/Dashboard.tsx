@@ -4,9 +4,10 @@ import SideBar from "../components/SideBar";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import SecureLS from "secure-ls";
-
+import moment from "moment-timezone";
 import { SearchOutlined } from "@ant-design/icons";
 import formatRupiah from "../components/IDR";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface Product {
   id: number;
@@ -36,6 +37,7 @@ const Dashboard = () => {
   const headers = {
     Authorization: `Bearer ${token?.tokens.replace("Bearer ", "")}`,
   };
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: "",
     address: "",
@@ -71,6 +73,7 @@ const Dashboard = () => {
       });
 
       if (res.data.status) {
+        console.log(res.data.data.products);
         setProducts(res.data.data.products);
         setOmset(res.data.data.omset);
         setPagination({
@@ -91,7 +94,7 @@ const Dashboard = () => {
       title: "Name",
       dataIndex: "name",
       key: "name",
-      sorter: (a: Product, b: Product) => a.name.localeCompare(b.name),
+      // sorter: (a: Product, b: Product) => a.name.localeCompare(b.name),
     },
     {
       title: "Description",
@@ -119,7 +122,19 @@ const Dashboard = () => {
         formatRupiah(record.price * record.stock),
       sorter: (a: Product, b: Product) => a.price * a.stock - b.price * b.stock,
     },
+    {
+      title: "Created at",
+      dataIndex: "created_at",
+      key: "created_at",
+      render: (created_at: string) => dateTime(created_at),
+      // sorter: (a: Product, b: Product) => a.stock - b.stock,
+    },
   ];
+
+  const dateTime = (req: string) => {
+    return moment(req).tz("Asia/Jakarta").format("YYYY-MM-DD HH:mm:ss");
+  };
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchText(value);
@@ -196,7 +211,12 @@ const Dashboard = () => {
               </Card>
               <Card
                 bordered
-                className="shadow rounded-xl text-center text-gray-400"
+                className="shadow rounded-xl text-center text-gray-400 cursor-pointer"
+                onClick={() =>
+                  navigate("/transactions", {
+                    state: { status: 1 },
+                  })
+                }
               >
                 <Statistic title="Total Omset" value={formatRupiah(omset)} />
               </Card>

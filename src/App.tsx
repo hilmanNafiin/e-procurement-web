@@ -5,6 +5,8 @@ import Dashboard from "./pages/Dashboard";
 import Vendor from "./pages/Vendor";
 import Products from "./pages/Products";
 import PrivateRoute from "./middleware/PrivateRoute";
+import Shop from "./pages/Shop";
+import Transactions from "./pages/Transactions";
 
 function App() {
   return (
@@ -12,6 +14,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/shop" element={<Shop />} />
 
         {/* Protected Routes */}
         <Route
@@ -19,6 +22,14 @@ function App() {
           element={
             <PrivateRoute>
               <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/transactions"
+          element={
+            <PrivateRoute>
+              <Transactions />
             </PrivateRoute>
           }
         />
