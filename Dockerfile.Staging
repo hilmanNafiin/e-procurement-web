@@ -30,6 +30,7 @@ COPY --from=staging /admin /admin
 # Copy the Nginx configuration
 COPY --from=staging /admin/nginx/default.conf /etc/nginx/conf.d/default.conf
 
+
 # Run Nginx
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
 EXPOSE 80
